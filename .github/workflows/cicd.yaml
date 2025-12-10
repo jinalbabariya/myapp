@@ -46,11 +46,4 @@ jobs:
         sed -i "s|image: .*|image: $IMAGE_TAG|g" myapp-gitops/environments/staging/deployment.yaml
         sed -i "s|image: .*|image: $IMAGE_TAG|g" myapp-gitops/environments/prod/deployment.yaml
 
-    - name: Commit changes
-      run: |
-        cd myapp-gitops
-        git config user.name "jinalbabariya"
-        git config user.email "jinalbabariya174@gmail.com"
-        git add .
-        git commit -m "Update image to $IMAGE_TAG" || echo "No changes"
-        git push
+ 
