@@ -17,11 +17,11 @@ jobs:
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+        password: ${{ secrets.GHCR_PAT }}
 
     - name: Build image
       run: |
-        IMAGE_TAG=ghcr.io/${{ github.repository_owner }}/hello-world:${{ github.sha }}
+        IMAGE_TAG=ghcr.io/${{ github.repository_owner }}/myapp:${{ github.sha }}
         echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
         docker build -t $IMAGE_TAG .
 
