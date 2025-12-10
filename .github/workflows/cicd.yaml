@@ -1,0 +1,51 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Login to GHCR
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build image
+      run: |
+        IMAGE_TAG=ghcr.io/${{ github.repository_owner }}/hello-world:${{ github.sha }}
+        echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+        docker build -t $IMAGE_TAG .
+
+    - name: Push image
+      run: docker push $IMAGE_TAG
+
+    - name: Update GitOps repo
+      uses: actions/checkout@v4
+      with:
+        repository: jinalbabariya/myapp-gitops
+        token: ${{ secrets.GITHUB_TOKEN }}
+        path: myapp-gitops
+
+    - name: Update image tag
+      run: |
+        sed -i "s|image: .*|image: $IMAGE_TAG|g" myapp-gitops/environments/dev/deployment.yaml
+        sed -i "s|image: .*|image: $IMAGE_TAG|g" myapp-gitops/environments/staging/deployment.yaml
+        sed -i "s|image: .*|image: $IMAGE_TAG|g" myapp-gitops/environments/prod/deployment.yaml
+
+    - name: Commit changes
+      run: |
+        cd myapp-gitops
+        git config user.name "github-actions"
+        git config user.email "actions@github.com"
+        git add .
+        git commit -m "Update image to $IMAGE_TAG" || echo "No changes"
+        git push
