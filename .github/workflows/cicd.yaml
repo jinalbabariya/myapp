@@ -52,8 +52,23 @@ jobs:
       run: |
         git clone https://$PAT_TOKEN@github.com/jinalbabariya/myapp-gitops.git myapp-gitops-temp
         cd myapp-gitops-temp
+
+        find . -type f -name "*.yaml" -print0 | while IFS= read -r -d '' file; do
+        sed -i "s|image: ghcr.io.*/myapp:.*|image: $IMAGE_TAG|g" "$file"
+        done
+
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
+
         git add .
         git commit -m "Update image to $IMAGE_TAG" || echo "No changes"
         git push origin HEAD:main
+
+        if git diff --quiet; then
+          echo "No changes detected. Nothing to commit."
+        else
+          git add .
+          git commit -m "Update myapp image to $IMAGE_TAG"
+          git push origin HEAD:main
+          echo "Changes committed and pushed!"
+        fi
